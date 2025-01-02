@@ -1,0 +1,123 @@
+{
+	"info": {
+		"_postman_id": "6e912ce9-433f-4781-9e72-f9c8c4e38753",
+		"name": "MeiliSearch",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15771897"
+	},
+	"item": [
+		{
+			"name": "Sync",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:5000/sync",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"sync"
+					]
+				},
+				"description": "The endpoint `http://127.0.0.1:5000/sync` is a POST request that is used to synchronize data. The response of this request is documented as a JSON schema."
+			},
+			"response": []
+		},
+		{
+			"name": "Status",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:5000/status",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"status"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Index",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "masterKey",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:7700/indexes/items/settings/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7700",
+					"path": [
+						"indexes",
+						"items",
+						"settings",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:5000/search?q=asp 100ml&brand=Bioforce&category=Mother Tincture 100 ml",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"search"
+					],
+					"query": [
+						{
+							"key": "q",
+							"value": "asp 100ml"
+						},
+						{
+							"key": "brand",
+							"value": "Bioforce"
+						},
+						{
+							"key": "category",
+							"value": "Mother Tincture 100 ml"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
