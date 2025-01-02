@@ -1,0 +1,211 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Medicine Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .search-container {
+            margin-bottom: 20px;
+        }
+        #searchInput {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        .result-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .result-name {
+            font-size: 18px;
+            color: #333;
+        }
+        .result-brand {
+            color: #666;
+            font-size: 14px;
+        }
+        .result-category {
+            color: #888;
+            font-size: 12px;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 0 2px;
+        }
+        .search-stats {
+            color: #666;
+            font-size: 13px;
+            margin: 10px 0;
+        }
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 2px solid #3498db;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .pagination button:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+        .pagination button.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>Medicine Search</h1>
+        <p><i>Sample item search for Vivitra using Meilisearch.</i></p>        
+    </div>
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search medicines...">
+    </div>
+    <div id="loader" class="loader"></div>
+    <div id="searchStats" class="search-stats"></div>
+    <div id="results"></div>
+    <div id="pagination" class="pagination"></div>
+
+    <script>
+        let debounceTimer;
+        const searchInput = document.getElementById('searchInput');
+        const resultsContainer = document.getElementById('results');
+        const loader = document.getElementById('loader');
+        const searchStats = document.getElementById('searchStats');
+        let currentPage = 1;
+        const itemsPerPage = 20;
+        let totalHits = 0;
+        let currentQuery = '';
+
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const query = e.target.value.trim();
+                if (query.length > 1) {
+                    currentPage = 1;  // Reset to first page on new search
+                    performSearch(query, currentPage);
+                } else {
+                    resultsContainer.innerHTML = '';
+                    searchStats.innerHTML = '';
+                    document.getElementById('pagination').innerHTML = '';
+                }
+            }, 300);
+        });
+
+        async function performSearch(query, page = 1) {
+            try {
+                currentQuery = query;
+                loader.style.display = 'block';
+                const startTime = performance.now();
+                
+                const offset = (page - 1) * itemsPerPage;
+                const url = `/search?q=${encodeURIComponent(query)}&offset=${offset}&limit=${itemsPerPage}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const endTime = performance.now();
+                const searchTime = ((endTime - startTime) / 1000).toFixed(2);
+                
+                totalHits = data.estimatedTotalHits;
+                searchStats.innerHTML = `Found ${totalHits} results (page ${page} of ${Math.ceil(totalHits/itemsPerPage)}) in ${searchTime} seconds`;
+                
+                if (data.hits.length === 0) {
+                    resultsContainer.innerHTML = '<p>No results found</p>';
+                    return;
+                }
+
+                const resultsHtml = data.hits.map(item => `
+                    <div class="result-item">
+                        <div class="result-name">${item.item_name}</div>
+                        <div class="result-brand">${item.brand}</div>
+                        <div class="result-category">${item.category}</div>
+                    </div>
+                `).join('');
+
+                resultsContainer.innerHTML = resultsHtml;
+                updatePagination(page);
+
+            } catch (error) {
+                console.error('Search failed:', error);
+                resultsContainer.innerHTML = '<p>Search failed. Please try again.</p>';
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function updatePagination(currentPage) {
+            const totalPages = Math.ceil(totalHits / itemsPerPage);
+            const pagination = document.getElementById('pagination');
+            
+            let paginationHtml = '';
+            
+            if (totalPages > 1) {
+                paginationHtml += `
+                    <button ${currentPage === 1 ? 'disabled' : ''} 
+                        onclick="handlePageChange(${currentPage - 1})">Previous</button>
+                `;
+                
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                        paginationHtml += `
+                            <button class="${i === currentPage ? 'active' : ''}" 
+                                onclick="handlePageChange(${i})">${i}</button>
+                        `;
+                    } else if (i === currentPage - 3 || i === currentPage + 3) {
+                        paginationHtml += '<span>...</span>';
+                    }
+                }
+                
+                paginationHtml += `
+                    <button ${currentPage === totalPages ? 'disabled' : ''} 
+                        onclick="handlePageChange(${currentPage + 1})">Next</button>
+                `;
+            }
+            
+            pagination.innerHTML = paginationHtml;
+        }
+
+        function handlePageChange(page) {
+            if (currentQuery) {
+                currentPage = page;
+                window.scrollTo(0, 0);
+                performSearch(currentQuery, page);
+            }
+        }
+    </script>
+</body>
+</html>
